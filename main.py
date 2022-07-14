@@ -11,13 +11,13 @@ def get_file_name_from_url(url: str) -> str:
 
 
 def download_image(images_dir_path: Path, image_url: str) -> Path:
-    img_response = requests.get(image_url)
-    img_response.raise_for_status()
+    image_response = requests.get(image_url)
+    image_response.raise_for_status()
     image_path = images_dir_path.joinpath(
         get_file_name_from_url(image_url)
     )
     with open(image_path, 'wb') as file:
-        file.write(img_response.content)
+        file.write(image_response.content)
     return image_path
 
 
@@ -45,32 +45,34 @@ def get_vk_api_response(api_method: str, method_params: dict) -> dict:
         params=method_params
     )
     method_response.raise_for_status()
-    return method_response.json()['response']
+    return method_response.json().get('response')
 
 
-def post_image_on_vk_club_wall(image_path: Path,
-                               group_id: int, access_token: str):
-    vk_api_version = '5.131'
-
-    photos_get_wall_upload_server_response = get_vk_api_response(
+def get_vk_server_upload_url(group_id: int, access_token: str,
+                             vk_api_version: str) -> str:
+    return get_vk_api_response(
         api_method='photos.getWallUploadServer',
         method_params={
             'group_id': group_id,
             'access_token': access_token,
             'v': vk_api_version
         }
-    )
+    ).get('upload_url')
 
-    upload_url = photos_get_wall_upload_server_response.get('upload_url')
+
+def upload_image(image_path: Path, upload_url: str) -> list:
     with open(image_path, 'rb') as file:
         files = {
             'photo': file,
         }
         response = requests.post(upload_url, files=files)
         response.raise_for_status()
-        response_after_upload: dict = response.json()
+    return response.json().values()
 
-    server, photo, hash_ = response_after_upload.values()
+
+def save_image_in_club_album(group_id: int, access_token: str,
+                             vk_api_version: str,
+                             server: int, photo: str, hash_: str) -> tuple:
     photos_save_wall_photo_response = get_vk_api_response(
         api_method='photos.saveWallPhoto',
         method_params={
@@ -82,24 +84,78 @@ def post_image_on_vk_club_wall(image_path: Path,
             'v': vk_api_version
         }
     )
-    print(get_pretty_json(photos_save_wall_photo_response))
+    return tuple(
+        photos_save_wall_photo_response[0].get(key)
+        for key in ('owner_id', 'id')
+    )
+
+
+def post_uploaded_image(group_id: int, access_token: str,
+                        vk_api_version: str, author_comment: str,
+                        image_attachment: str) -> int:
+    wall_post_response = get_vk_api_response(
+        api_method='wall.post',
+        method_params={
+            'owner_id': -group_id,
+            'from_group': True,
+            'message': author_comment,
+            'attachments': image_attachment,
+            'access_token': access_token,
+            'v': vk_api_version
+        }
+    )
+    return wall_post_response.get('post_id')
+
+
+def post_image_on_vk_club_wall(image_path: Path, group_id: int,
+                               access_token: str, author_comment: str) -> int:
+    vk_api_version = '5.131'
+
+    upload_url = get_vk_server_upload_url(
+        group_id,
+        access_token,
+        vk_api_version
+    )
+
+    media_owner_id, media_id = save_image_in_club_album(
+        group_id,
+        access_token,
+        vk_api_version,
+        *(upload_image(image_path, upload_url))
+    )
+    image_attachment = f'photo{media_owner_id}_{media_id}'
+
+    return post_uploaded_image(
+        group_id,
+        access_token,
+        vk_api_version,
+        author_comment,
+        image_attachment
+    )
 
 
 def main():
     env = Env()
     env.read_env()
-    vk_app_client_id: int = env.int('VK_APP_CLIENT_ID')
     vk_app_access_token: str = env('VK_APP_ACCESS_TOKEN')
     vk_group_id: int = env.int('VK_GROUP_ID')
+
     images_dir_path = Path('images')
     images_dir_path.mkdir(parents=True, exist_ok=True)
+
     comic_url = 'https://xkcd.com/353/'
     comic_metadata = get_comic_metadata(comic_url)
-    image_url: str = comic_metadata['img']
-    author_comment: str = comic_metadata['alt']
+    image_url: str = comic_metadata.get('img')
+    author_comment: str = comic_metadata.get('alt')
+
     image_path = download_image(images_dir_path, image_url)
-    print(author_comment)
-    post_image_on_vk_club_wall(image_path, vk_group_id, vk_app_access_token)
+    post_id = post_image_on_vk_club_wall(
+        image_path,
+        vk_group_id,
+        vk_app_access_token,
+        author_comment
+    )
+    print(f'Post #{post_id} - success!')
 
 
 if __name__ == "__main__":
