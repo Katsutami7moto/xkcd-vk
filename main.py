@@ -19,21 +19,23 @@ def download_image(images_path: Path, image_url: str) -> Path:
     return file_path
 
 
-def get_image_url_from_comic_url(comic_url: str):
+def get_comic_metadata(comic_url: str) -> dict:
     response = requests.get(
         urljoin(comic_url, 'info.0.json')
     )
     response.raise_for_status()
-    comic_metadata = response.json()
-    return comic_metadata['img']
+    return response.json()
 
 
 def main():
     images_path = Path('images')
     images_path.mkdir(parents=True, exist_ok=True)
     comic_url = 'https://xkcd.com/353/'
-    image_url = get_image_url_from_comic_url(comic_url)
+    comic_metadata = get_comic_metadata(comic_url)
+    image_url: str = comic_metadata['img']
+    author_comment: str = comic_metadata['alt']
     download_image(images_path, image_url)
+    print(author_comment)
 
 
 if __name__ == "__main__":
