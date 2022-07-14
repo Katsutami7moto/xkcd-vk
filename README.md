@@ -18,6 +18,7 @@ It is the file to contain environmental variables that usually store data unique
 ```dotenv
 VK_APP_CLIENT_ID={vk_app_client_id}
 VK_APP_ACCESS_TOKEN='{vk_app_access_token}'
+VK_GROUP_ID={vk_group_id}
 ```
 3. Replace `{vk_app_client_id}` with [VK](https://vk.com/apps?act=manage) app client id you will receive when you [create](https://vk.com/editapp?act=create) a `standalone` app. It's in your app info url:
 ```
@@ -31,7 +32,8 @@ You will be redirected to page with this URL:
 ```
 https://oauth.vk.com/blank.html#access_token={vk_app_access_token}&expires_in=0&user_id={your_vk_user_id}&state=123456
 ```
-5. 
+5. Replace `{vk_group_id}` with the ID of VK club you have created. When you just have created it, the ID is in the URL: `https://vk.com/club{vk_group_id}`.
+6. 
 
 ### How to use
 

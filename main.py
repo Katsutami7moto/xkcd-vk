@@ -29,11 +29,31 @@ def get_comic_metadata(comic_url: str) -> dict:
     return response.json()
 
 
+def get_pretty_json(data: dict):
+    return json.dumps(
+        data,
+        indent=4,
+        ensure_ascii=False
+    )
+
+
+def get_vk_api_response(method: str, method_params: dict) -> dict:
+    vk_api_url = 'https://api.vk.com/method/'
+    method_url = urljoin(vk_api_url, method)
+    method_response = requests.get(
+        url=method_url,
+        params=method_params
+    )
+    method_response.raise_for_status()
+    return method_response.json()
+
+
 def main():
     env = Env()
     env.read_env()
     vk_app_client_id: int = env.int('VK_APP_CLIENT_ID')
     vk_app_access_token: str = env('VK_APP_ACCESS_TOKEN')
+    vk_group_id: int = env.int('VK_GROUP_ID')
     images_path = Path('images')
     images_path.mkdir(parents=True, exist_ok=True)
     comic_url = 'https://xkcd.com/353/'
@@ -43,26 +63,14 @@ def main():
     download_image(images_path, image_url)
     print(author_comment)
 
-    vk_api_url = 'https://api.vk.com/method/'
     vk_api_version = '5.131'
-    groups_get_url = urljoin(vk_api_url, 'groups.get')
-    groups_get_params = {
-        'extended': True,
+    method = 'photos.getWallUploadServer'
+    method_params = {
+        'group_id': vk_group_id,
         'access_token': vk_app_access_token,
         'v': vk_api_version
     }
-    groups_get_response = requests.get(
-        url=groups_get_url,
-        params=groups_get_params
-    )
-    groups_get_response.raise_for_status()
-    print(
-        json.dumps(
-            groups_get_response.json(),
-            indent=4,
-            ensure_ascii=False
-        )
-    )
+    print(get_pretty_json(get_vk_api_response(method, method_params)))
 
 
 if __name__ == "__main__":
