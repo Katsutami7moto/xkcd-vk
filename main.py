@@ -37,6 +37,14 @@ def get_pretty_json(data: dict):
     )
 
 
+def get_random_comic_url():
+    xkcd_random_url = 'https://c.xkcd.com/random/comic/'
+    response = requests.get(xkcd_random_url)
+    response.raise_for_status()
+    random_comic_url = response.history[1].url
+    return random_comic_url
+
+
 def get_vk_api_response(api_method: str, method_params: dict) -> dict:
     vk_api_url = 'https://api.vk.com/method/'
     method_url = urljoin(vk_api_url, api_method)
@@ -143,7 +151,7 @@ def main():
     images_dir_path = Path('images')
     images_dir_path.mkdir(parents=True, exist_ok=True)
 
-    comic_url = 'https://xkcd.com/353/'
+    comic_url = get_random_comic_url()
     comic_metadata = get_comic_metadata(comic_url)
     image_url: str = comic_metadata.get('img')
     author_comment: str = comic_metadata.get('alt')
