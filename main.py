@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from urllib.parse import unquote, urlsplit, urljoin
 
@@ -41,6 +42,27 @@ def main():
     author_comment: str = comic_metadata['alt']
     download_image(images_path, image_url)
     print(author_comment)
+
+    vk_api_url = 'https://api.vk.com/method/'
+    vk_api_version = '5.131'
+    groups_get_url = urljoin(vk_api_url, 'groups.get')
+    groups_get_params = {
+        'extended': True,
+        'access_token': vk_app_access_token,
+        'v': vk_api_version
+    }
+    groups_get_response = requests.get(
+        url=groups_get_url,
+        params=groups_get_params
+    )
+    groups_get_response.raise_for_status()
+    print(
+        json.dumps(
+            groups_get_response.json(),
+            indent=4,
+            ensure_ascii=False
+        )
+    )
 
 
 if __name__ == "__main__":
