@@ -92,7 +92,7 @@ def save_image_in_club_album(group_id: int, access_token: str,
 def post_uploaded_image(group_id: int, access_token: str,
                         vk_api_version: str, author_comment: str,
                         image_attachment: str) -> int:
-    wall_post_response = get_vk_api_response(
+    return get_vk_api_response(
         api_method='wall.post',
         method_params={
             'owner_id': -group_id,
@@ -102,8 +102,7 @@ def post_uploaded_image(group_id: int, access_token: str,
             'access_token': access_token,
             'v': vk_api_version
         }
-    )
-    return wall_post_response.get('post_id')
+    ).get('post_id')
 
 
 def post_image_on_vk_club_wall(image_path: Path, group_id: int,
