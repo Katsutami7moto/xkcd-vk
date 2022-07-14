@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from urllib.parse import unquote, urlsplit, urljoin
 
@@ -29,15 +28,7 @@ def get_comic_metadata(comic_url: str) -> dict:
     return response.json()
 
 
-def get_pretty_json(data: dict):
-    return json.dumps(
-        data,
-        indent=4,
-        ensure_ascii=False
-    )
-
-
-def get_random_comic_url():
+def get_random_comic_url() -> str:
     xkcd_random_url = 'https://c.xkcd.com/random/comic/'
     response = requests.get(xkcd_random_url)
     response.raise_for_status()
