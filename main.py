@@ -2,6 +2,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit, urljoin
 
 import requests
+from environs import Env
 
 
 def get_file_name_from_url(url: str) -> str:
@@ -28,6 +29,10 @@ def get_comic_metadata(comic_url: str) -> dict:
 
 
 def main():
+    env = Env()
+    env.read_env()
+    vk_app_client_id: int = env.int('VK_APP_CLIENT_ID')
+    vk_app_access_token: str = env('VK_APP_ACCESS_TOKEN')
     images_path = Path('images')
     images_path.mkdir(parents=True, exist_ok=True)
     comic_url = 'https://xkcd.com/353/'
