@@ -164,6 +164,7 @@ def main():
         author_comment
     )
     print(f'Post #{post_id} - success!')
+    image_path.unlink()
 
 
 if __name__ == "__main__":
