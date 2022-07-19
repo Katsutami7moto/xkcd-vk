@@ -32,6 +32,16 @@ def get_random_comic_metadata() -> dict:
     return random_comic_metadata_response.json()
 
 
+def handle_vk_api_response(api_response: dict) -> dict:
+    if 'response' in api_response:
+        return api_response['response']
+    else:
+        error = api_response['error']
+        raise requests.HTTPError(
+            f'{error["error_code"]}: {error["error_msg"]}'
+        )
+
+
 def get_vk_api_response(api_method: str, method_params: dict) -> dict:
     vk_api_url = 'https://api.vk.com/method/'
     method_url = urljoin(vk_api_url, api_method)
@@ -40,7 +50,7 @@ def get_vk_api_response(api_method: str, method_params: dict) -> dict:
         params=method_params
     )
     method_response.raise_for_status()
-    return method_response.json().get('response')
+    return method_response.json()
 
 
 def upload_image(image_path: Path, upload_url: str) -> list:
@@ -56,19 +66,21 @@ def upload_image(image_path: Path, upload_url: str) -> list:
 def save_image_in_club_album(group_id: int, access_token: str,
                              vk_api_version: str,
                              server: int, photo: str, hash_: str) -> tuple:
-    saved_wall_photo_response = get_vk_api_response(
-        api_method='photos.saveWallPhoto',
-        method_params={
-            'group_id': group_id,
-            'photo': photo,
-            'server': server,
-            'hash': hash_,
-            'access_token': access_token,
-            'v': vk_api_version
-        }
+    saved_wall_photo_response = handle_vk_api_response(
+        get_vk_api_response(
+            api_method='photos.saveWallPhoto',
+            method_params={
+                'group_id': group_id,
+                'photo': photo,
+                'server': server,
+                'hash': hash_,
+                'access_token': access_token,
+                'v': vk_api_version
+            }
+        )
     )
     return tuple(
-        saved_wall_photo_response[0].get(key)
+        saved_wall_photo_response[0][key]
         for key in ('owner_id', 'id')
     )
 
@@ -77,14 +89,16 @@ def post_image_on_vk_club_wall(image_path: Path, group_id: int,
                                access_token: str, author_comment: str) -> int:
     vk_api_version = '5.131'
 
-    upload_url = get_vk_api_response(
-        api_method='photos.getWallUploadServer',
-        method_params={
-            'group_id': group_id,
-            'access_token': access_token,
-            'v': vk_api_version
-        }
-    ).get('upload_url')
+    upload_url = handle_vk_api_response(
+        get_vk_api_response(
+            api_method='photos.getWallUploadServer',
+            method_params={
+                'group_id': group_id,
+                'access_token': access_token,
+                'v': vk_api_version
+            }
+        )
+    )['upload_url']
 
     media_owner_id, media_id = save_image_in_club_album(
         group_id,
@@ -94,17 +108,19 @@ def post_image_on_vk_club_wall(image_path: Path, group_id: int,
     )
     image_attachment = f'photo{media_owner_id}_{media_id}'
 
-    return get_vk_api_response(
-        api_method='wall.post',
-        method_params={
-            'owner_id': -group_id,
-            'from_group': True,
-            'message': author_comment,
-            'attachments': image_attachment,
-            'access_token': access_token,
-            'v': vk_api_version
-        }
-    ).get('post_id')
+    return handle_vk_api_response(
+        get_vk_api_response(
+            api_method='wall.post',
+            method_params={
+                'owner_id': -group_id,
+                'from_group': True,
+                'message': author_comment,
+                'attachments': image_attachment,
+                'access_token': access_token,
+                'v': vk_api_version
+            }
+        )
+    )['post_id']
 
 
 def main():
@@ -115,20 +131,25 @@ def main():
 
     images_dir_path = Path('images')
     images_dir_path.mkdir(parents=True, exist_ok=True)
+    image_path = Path()
 
-    comic_metadata = get_random_comic_metadata()
-    image_url: str = comic_metadata.get('img')
-    author_comment: str = comic_metadata.get('alt')
-
-    image_path = download_image(images_dir_path, image_url)
-    post_id = post_image_on_vk_club_wall(
-        image_path,
-        vk_group_id,
-        vk_app_access_token,
-        author_comment
-    )
-    print(f'Post #{post_id} - success!')
-    image_path.unlink()
+    try:
+        comic_metadata = get_random_comic_metadata()
+        image_url: str = comic_metadata['img']
+        author_comment: str = comic_metadata['alt']
+        image_path = download_image(images_dir_path, image_url)
+        post_id = post_image_on_vk_club_wall(
+            image_path,
+            vk_group_id,
+            vk_app_access_token,
+            author_comment
+        )
+    except requests.HTTPError as error:
+        print(f'ERROR\n{error}')
+    else:
+        print(f'Post #{post_id} - success!')
+    finally:
+        image_path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
