@@ -32,7 +32,7 @@ def get_random_comic_url() -> str:
     xkcd_random_url = 'https://c.xkcd.com/random/comic/'
     response = requests.get(xkcd_random_url)
     response.raise_for_status()
-    random_comic_url = response.history[1].url
+    random_comic_url = response.url
     return random_comic_url
 
 
