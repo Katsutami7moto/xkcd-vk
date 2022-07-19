@@ -47,18 +47,6 @@ def get_vk_api_response(api_method: str, method_params: dict) -> dict:
     return method_response.json().get('response')
 
 
-def get_vk_upload_server_url(group_id: int, access_token: str,
-                             vk_api_version: str) -> str:
-    return get_vk_api_response(
-        api_method='photos.getWallUploadServer',
-        method_params={
-            'group_id': group_id,
-            'access_token': access_token,
-            'v': vk_api_version
-        }
-    ).get('upload_url')
-
-
 def upload_image(image_path: Path, upload_url: str) -> list:
     with open(image_path, 'rb') as file:
         files = {
@@ -89,9 +77,27 @@ def save_image_in_club_album(group_id: int, access_token: str,
     )
 
 
-def post_uploaded_image(group_id: int, access_token: str,
-                        vk_api_version: str, author_comment: str,
-                        image_attachment: str) -> int:
+def post_image_on_vk_club_wall(image_path: Path, group_id: int,
+                               access_token: str, author_comment: str) -> int:
+    vk_api_version = '5.131'
+
+    upload_url = get_vk_api_response(
+        api_method='photos.getWallUploadServer',
+        method_params={
+            'group_id': group_id,
+            'access_token': access_token,
+            'v': vk_api_version
+        }
+    ).get('upload_url')
+
+    media_owner_id, media_id = save_image_in_club_album(
+        group_id,
+        access_token,
+        vk_api_version,
+        *(upload_image(image_path, upload_url))
+    )
+    image_attachment = f'photo{media_owner_id}_{media_id}'
+
     return get_vk_api_response(
         api_method='wall.post',
         method_params={
@@ -103,30 +109,6 @@ def post_uploaded_image(group_id: int, access_token: str,
             'v': vk_api_version
         }
     ).get('post_id')
-
-
-def post_image_on_vk_club_wall(image_path: Path, group_id: int,
-                               access_token: str, author_comment: str) -> int:
-    vk_api_version = '5.131'
-
-    upload_url = get_vk_upload_server_url(group_id, access_token,
-                                          vk_api_version)
-
-    media_owner_id, media_id = save_image_in_club_album(
-        group_id,
-        access_token,
-        vk_api_version,
-        *(upload_image(image_path, upload_url))
-    )
-    image_attachment = f'photo{media_owner_id}_{media_id}'
-
-    return post_uploaded_image(
-        group_id,
-        access_token,
-        vk_api_version,
-        author_comment,
-        image_attachment
-    )
 
 
 def main():
