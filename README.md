@@ -13,13 +13,14 @@ pip install -r requirements.txt
 Before you run the script, you will need to configure environmental variables:
 
 1. Go to the unzipped directory and create a file with the name `.env` (yes, it has only the extension).
-It is the file to contain environmental variables that usually store data unique to each user, thus you will need to create your own.
+This file will contain environment variables that usually store data unique to each user, thus you will need to create your own.
 2. Copy and paste this to `.env` file:
 ```dotenv
 VK_APP_ACCESS_TOKEN='{vk_app_access_token}'
 VK_GROUP_ID={vk_group_id}
 ```
-3. Replace `{vk_app_access_token}` with access token (for a `standalone` app you have [created](https://vk.com/editapp?act=create)) you will receive with [Implicit Flow](https://dev.vk.com/api/access-token/implicit-flow-user) procedure. You will need to add `photos`, `groups`, `wall` and `offline` to the scope parameter. The request URL will look like that (yes, without "necessary" `redirect_uri`):
+3. [Create](https://vk.com/editapp?act=create) VK app (choose `standalone`).
+4. Replace `{vk_app_access_token}` with access token for that VK app you will receive with [Implicit Flow](https://dev.vk.com/api/access-token/implicit-flow-user) procedure. You will need to add `photos`, `groups`, `wall` and `offline` to the scope parameter. The request URL will look like that (yes, without "necessary" `redirect_uri`):
 ```
 https://oauth.vk.com/authorize?client_id={vk_app_client_id}&display=page&scope=photos+groups+wall+offline&response_type=token&v=5.131&state=123456
 ```
