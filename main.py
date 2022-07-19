@@ -20,20 +20,16 @@ def download_image(images_dir_path: Path, image_url: str) -> Path:
     return image_path
 
 
-def get_comic_metadata(comic_url: str) -> dict:
-    response = requests.get(
-        urljoin(comic_url, 'info.0.json')
-    )
-    response.raise_for_status()
-    return response.json()
-
-
-def get_random_comic_url() -> str:
+def get_random_comic_metadata() -> dict:
     xkcd_random_url = 'https://c.xkcd.com/random/comic/'
-    response = requests.get(xkcd_random_url)
-    response.raise_for_status()
-    random_comic_url = response.url
-    return random_comic_url
+    xkcd_random_response = requests.get(xkcd_random_url)
+    xkcd_random_response.raise_for_status()
+    random_comic_url = xkcd_random_response.url
+    random_comic_metadata_response = requests.get(
+        urljoin(random_comic_url, 'info.0.json')
+    )
+    random_comic_metadata_response.raise_for_status()
+    return random_comic_metadata_response.json()
 
 
 def get_vk_api_response(api_method: str, method_params: dict) -> dict:
@@ -120,8 +116,7 @@ def main():
     images_dir_path = Path('images')
     images_dir_path.mkdir(parents=True, exist_ok=True)
 
-    comic_url = get_random_comic_url()
-    comic_metadata = get_comic_metadata(comic_url)
+    comic_metadata = get_random_comic_metadata()
     image_url: str = comic_metadata.get('img')
     author_comment: str = comic_metadata.get('alt')
 
