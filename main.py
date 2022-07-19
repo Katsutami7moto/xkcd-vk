@@ -47,7 +47,7 @@ def get_vk_api_response(api_method: str, method_params: dict) -> dict:
     return method_response.json().get('response')
 
 
-def get_vk_server_upload_url(group_id: int, access_token: str,
+def get_vk_upload_server_url(group_id: int, access_token: str,
                              vk_api_version: str) -> str:
     return get_vk_api_response(
         api_method='photos.getWallUploadServer',
@@ -72,7 +72,7 @@ def upload_image(image_path: Path, upload_url: str) -> list:
 def save_image_in_club_album(group_id: int, access_token: str,
                              vk_api_version: str,
                              server: int, photo: str, hash_: str) -> tuple:
-    photos_save_wall_photo_response = get_vk_api_response(
+    saved_wall_photo_response = get_vk_api_response(
         api_method='photos.saveWallPhoto',
         method_params={
             'group_id': group_id,
@@ -84,7 +84,7 @@ def save_image_in_club_album(group_id: int, access_token: str,
         }
     )
     return tuple(
-        photos_save_wall_photo_response[0].get(key)
+        saved_wall_photo_response[0].get(key)
         for key in ('owner_id', 'id')
     )
 
@@ -109,11 +109,8 @@ def post_image_on_vk_club_wall(image_path: Path, group_id: int,
                                access_token: str, author_comment: str) -> int:
     vk_api_version = '5.131'
 
-    upload_url = get_vk_server_upload_url(
-        group_id,
-        access_token,
-        vk_api_version
-    )
+    upload_url = get_vk_upload_server_url(group_id, access_token,
+                                          vk_api_version)
 
     media_owner_id, media_id = save_image_in_club_album(
         group_id,
