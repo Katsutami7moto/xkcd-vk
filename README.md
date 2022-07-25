@@ -10,7 +10,7 @@ Then open terminal form unzipped directory and use `pip` (or `pip3`, if there is
 ```commandline
 pip install -r requirements.txt
 ```
-Before you run the script, you will need to configure environmental variables:
+Before you run the script, you will need to configure environment variables:
 
 1. Go to the unzipped directory and create a file with the name `.env` (yes, it has only the extension).
 This file will contain environment variables that usually store data unique to each user, thus you will need to create your own.
